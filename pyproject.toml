@@ -1,0 +1,10 @@
+[project]
+name = "fplplot"
+version = "0.1.0"
+description = "Fantasy Premier League rank visualization tool"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "matplotlib>=3.8.0",
+    "numpy>=1.26.0",
+]
