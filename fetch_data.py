@@ -105,7 +105,8 @@ def fetch_and_save_season(season: str, manager_id: str | None = None) -> Path:
 
     Args:
         season: Season code (e.g., "2526")
-        manager_id: Optional FPL manager ID. If not provided, looks up from id.json
+        manager_id: Optional FPL manager ID. If not provided, looks up from
+        id.json
 
     Returns:
         Path to the saved CSV file

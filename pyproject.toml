@@ -9,3 +9,17 @@ dependencies = [
     "numpy>=1.26.0",
     "requests>=2.31.0",
 ]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.14.10",
+]
+
+[tool.ruff]
+line-length = 79
+
+[tool.ruff.lint]
+select = ["E", "F", "B"]
+
+[tool.ruff.format]
+docstring-code-format = true
