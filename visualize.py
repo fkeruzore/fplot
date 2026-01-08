@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator, FuncFormatter
 import numpy as np
 
-plt.style.use("petroff10")
+plt.style.use(["petroff10", Path(__file__).parent / "fplplot.mplstyle"])
 
 
 def load_fpl_data(csv_path):

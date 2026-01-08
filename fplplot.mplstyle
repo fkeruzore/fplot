@@ -1,0 +1,25 @@
+axes.linewidth    : 1.0   # edge linewidth
+axes.axisbelow    : line  # whether axis gridlines and ticks are below
+                          # the axes elements (lines, text, etc)
+xtick.major.size  : 5     # major tick size in points
+xtick.minor.size  : 2.5   # minor tick size in points
+xtick.major.width : 1.0   # major tick width in points
+xtick.minor.width : 1.0   # minor tick width in points
+xtick.direction   : in    # direction: in, out, or inout
+
+ytick.major.size  : 5     # major tick size in points
+ytick.minor.size  : 2.5   # minor tick size in points
+ytick.major.width : 1.0   # major tick width in points
+ytick.minor.width : 1.0   # minor tick width in points
+ytick.direction   : in    # direction: in, out, or inout
+
+grid.color        : 0.5   # grid color
+grid.linestyle    : :     # dotted
+grid.linewidth    : 0.5   # in points
+grid.alpha        : 1     # transparency, between 0.0 and 1.0
+
+legend.fancybox   : False # if True, use a rounded box for the
+                          # legend, else a rectangle
+legend.numpoints  : 1     # the number of points in the legend line
+legend.frameon    : True  # whether or not to draw a frame around legend
+
