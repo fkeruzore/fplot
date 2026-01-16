@@ -9,6 +9,24 @@ import requests
 FPL_API_BASE = "https://fantasy.premierleague.com/api"
 
 
+def get_bootstrap_static() -> dict:
+    """Fetch bootstrap-static data from the FPL API.
+
+    This contains league-wide data including average scores per gameweek.
+
+    Returns:
+        dict containing 'events' (gameweek data with averages), 'teams',
+        'elements' (players), and game settings
+
+    Raises:
+        requests.HTTPError: If the API request fails
+    """
+    url = f"{FPL_API_BASE}/bootstrap-static/"
+    response = requests.get(url, timeout=30)
+    response.raise_for_status()
+    return response.json()
+
+
 def get_team_history(manager_id: int | str) -> dict:
     """Fetch a manager's season history from the FPL API.
 
@@ -84,6 +102,28 @@ def write_season_csv(rows: list[dict], output_path: Path) -> None:
         writer.writerows(rows)
 
 
+def save_bootstrap_data(output_path: Path | None = None) -> Path:
+    """Fetch and save bootstrap-static data (contains average points per GW).
+
+    Args:
+        output_path: Path to write JSON file. Defaults to data/bootstrap.json
+
+    Returns:
+        Path to the saved JSON file
+    """
+    if output_path is None:
+        output_path = Path(__file__).parent / "data" / "bootstrap.json"
+
+    print("Fetching bootstrap-static data...")
+    data = get_bootstrap_static()
+
+    with open(output_path, "w") as f:
+        json.dump(data, f, indent=2)
+    print(f"Saved bootstrap data to {output_path}")
+
+    return output_path
+
+
 def load_season_ids(json_path: Path | None = None) -> dict[str, str]:
     """Load season -> FPL ID mapping from JSON file.
 
@@ -145,6 +185,9 @@ def fetch_current_season() -> Path:
 
 
 if __name__ == "__main__":
-    # When run directly, fetch the current season
+    # When run directly, fetch the current season and bootstrap data
     csv_path = fetch_current_season()
     print(f"\nData saved to {csv_path}")
+
+    bootstrap_path = save_bootstrap_data()
+    print(f"Bootstrap data saved to {bootstrap_path}")

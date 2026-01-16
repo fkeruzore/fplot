@@ -19,13 +19,15 @@ def load_fpl_data(csv_path):
         csv_path: Path to CSV file
 
     Returns:
-        dict with keys: gw, or_vals, gwr, tc (lists of values)
+        dict with keys: gw, or_vals, gwr, tc, gwp, pb (lists of values)
     """
     data = {
         "gw": [],
         "or_vals": [],  # Overall Rank values
         "gwr": [],  # Gameweek Rank values (may have None for missing)
         "tc": [],  # Transfer Cost
+        "gwp": [],  # Gameweek Points
+        "pb": [],  # Points on Bench
     }
 
     with open(csv_path, "r") as f:
@@ -67,10 +69,28 @@ def load_fpl_data(csv_path):
                 except (ValueError, TypeError):
                     tc_val = 0
 
+            # Extract Gameweek Points
+            gwp_val = 0
+            if "GWP" in row:
+                try:
+                    gwp_val = int(row["GWP"])
+                except (ValueError, TypeError):
+                    gwp_val = 0
+
+            # Extract Points on Bench
+            pb_val = 0
+            if "PB" in row:
+                try:
+                    pb_val = int(row["PB"])
+                except (ValueError, TypeError):
+                    pb_val = 0
+
             data["gw"].append(gw)
             data["or_vals"].append(or_val)
             data["gwr"].append(gwr_val)
             data["tc"].append(tc_val)
+            data["gwp"].append(gwp_val)
+            data["pb"].append(pb_val)
 
     # Sort by gameweek (handles reversed order in 2526 format)
     sorted_indices = sorted(
@@ -94,6 +114,161 @@ def format_rank(value, pos):
         return f"{int(value / 1e3)}k"
     else:
         return f"{int(value)}"
+
+
+def load_bootstrap_averages(json_path=None):
+    """Load average points per gameweek from bootstrap.json.
+
+    Args:
+        json_path: Path to bootstrap.json file. Defaults to data/bootstrap.json
+
+    Returns:
+        dict mapping gameweek number (int) to average points (int)
+    """
+    import json
+
+    if json_path is None:
+        json_path = Path(__file__).parent / "data" / "bootstrap.json"
+
+    try:
+        with open(json_path) as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        return {}
+
+    averages = {}
+    for event in data.get("events", []):
+        gw = event.get("id")
+        avg = event.get("average_entry_score")
+        if gw is not None and avg is not None:
+            averages[gw] = avg
+
+    return averages
+
+
+def plot_points_evolution(csv_path):
+    """Generate FPL points per gameweek visualization.
+
+    Creates a plot showing Gameweek Points, Points on Bench, and
+    league average points over the season, with hits highlighted.
+
+    Args:
+        csv_path: Path to CSV file (e.g., "data/2526.csv")
+
+    Output:
+        Saves PNG to imgs/ directory with _points suffix
+    """
+    # Load data
+    data = load_fpl_data(csv_path)
+    averages = load_bootstrap_averages()
+
+    if not data["gw"]:
+        print(f"No valid data found in {csv_path}")
+        return
+
+    # Create figure
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    # 1. Plot hits as vertical bars (TC > 0)
+    for i, (gw, tc) in enumerate(zip(data["gw"], data["tc"], strict=False)):
+        if tc > 0:
+            ax.axvspan(
+                gw - 0.25,
+                gw + 0.25,
+                color="C2",
+                alpha=0.3,
+                label="Hits" if i == 0 or data["tc"][i - 1] == 0 else "",
+                lw=0,
+                ec=None,
+                zorder=0,
+            )
+
+    # 2. Plot Gameweek Points line
+    ax.plot(
+        data["gw"],
+        data["gwp"],
+        color="C0",
+        linewidth=2,
+        marker="o",
+        markersize=8,
+        label="GWP",
+        mec="w",
+        mew=1,
+        zorder=4,
+    )
+
+    # 3. Plot Points on Bench line
+    ax.plot(
+        data["gw"],
+        data["pb"],
+        color="C3",
+        linewidth=2,
+        marker="s",
+        markersize=7,
+        label="PB",
+        mec="w",
+        mew=1,
+        zorder=3,
+    )
+
+    # 4. Plot league average line (if available)
+    if averages:
+        avg_gws = [gw for gw in data["gw"] if gw in averages]
+        avg_vals = [averages[gw] for gw in avg_gws]
+        if avg_gws:
+            ax.plot(
+                avg_gws,
+                avg_vals,
+                color="C1",
+                linewidth=2,
+                linestyle="--",
+                label="Average",
+                zorder=2,
+            )
+
+    # Set y-axis (linear scale for points)
+    ax.set_ylim(bottom=0)
+
+    # Set x-axis limits and ticks
+    ax.set_xlim(0.5, 38.5)
+
+    # X-axis: major ticks on even GWs, minor ticks on odd GWs
+    ax.xaxis.set_major_locator(MultipleLocator(2))
+    ax.xaxis.set_minor_locator(MultipleLocator(1))
+
+    # Labels
+    ax.set_xlabel("GW", fontsize=12)
+    ax.set_ylabel("Points", fontsize=12)
+
+    # Grid
+    ax.xaxis.set_ticks_position("both")
+    ax.yaxis.set_ticks_position("both")
+    ax.grid(True, which="major", alpha=0.75, ls=":", zorder=-1)
+
+    # Legend - remove duplicate 'Hits' labels
+    handles, labels = ax.get_legend_handles_labels()
+    by_label = dict(zip(labels, handles, strict=False))
+    ax.legend(
+        by_label.values(),
+        by_label.keys(),
+        loc="upper right",
+        fontsize=11,
+        frameon=True,
+    )
+
+    # Tight layout
+    plt.tight_layout()
+
+    # Save figure
+    csv_path_obj = Path(csv_path)
+    script_dir = Path(__file__).parent
+    output_path = script_dir / "imgs" / f"{csv_path_obj.stem}_points.png"
+    output_path.parent.mkdir(exist_ok=True)
+
+    plt.savefig(output_path, dpi=150, bbox_inches="tight")
+    print(f"Saved visualization to {output_path}")
+
+    plt.close()
 
 
 def plot_rank_evolution(csv_path):
@@ -242,7 +417,7 @@ def plot_rank_evolution(csv_path):
     csv_path_obj = Path(csv_path)
     # Save to imgs/ directory in fplplot
     script_dir = Path(__file__).parent
-    output_path = script_dir / "imgs" / f"{csv_path_obj.stem}.png"
+    output_path = script_dir / "imgs" / f"{csv_path_obj.stem}_rank.png"
     output_path.parent.mkdir(exist_ok=True)
 
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
