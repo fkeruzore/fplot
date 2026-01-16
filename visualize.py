@@ -175,7 +175,7 @@ def plot_hits_and_chips(ax, data):
                 label="Hits" if i == 0 or data["tc"][i - 1] == 0 else "",
                 lw=0,
                 ec=None,
-                zorder=0,
+                zorder=9,
             )
 
     # Plot chips as vertical bars with labels
@@ -190,7 +190,7 @@ def plot_hits_and_chips(ax, data):
                 label="Chips" if not chip_label_added else "",
                 lw=0,
                 ec=None,
-                zorder=0,
+                zorder=9,
             )
             # Use blended transform: x in data coords, y in axes coords (0-1)
             ax.text(
@@ -246,7 +246,7 @@ def plot_points_evolution(csv_path):
         label="GWP",
         mec="w",
         mew=1,
-        zorder=4,
+        zorder=14,
     )
 
     # 3. Plot Points on Bench line
@@ -260,7 +260,7 @@ def plot_points_evolution(csv_path):
         label="PB",
         mec="w",
         mew=1,
-        zorder=3,
+        zorder=13,
     )
 
     # 4. Plot league average line (if available)
@@ -275,7 +275,7 @@ def plot_points_evolution(csv_path):
                 linewidth=2,
                 linestyle="--",
                 label="Average",
-                zorder=2,
+                zorder=12,
             )
 
     # Set y-axis (linear scale for points)
@@ -370,7 +370,7 @@ def plot_rank_evolution(csv_path):
         label="OR",
         mec="w",
         mew=1,
-        zorder=4,
+        zorder=14,
     )
 
     # 3. Plot final/current OR horizontal line
@@ -380,7 +380,7 @@ def plot_rank_evolution(csv_path):
         linestyle="--",
         linewidth=1.5,
         label=or_label,
-        zorder=3,
+        zorder=13,
     )
 
     # 4. Plot Gameweek Ranks (only where data exists)
@@ -402,7 +402,7 @@ def plot_rank_evolution(csv_path):
             label="GWR",
             mec="w",
             mew=1,
-            zorder=2,
+            zorder=12,
         )
 
     # 5. Plot mean GWR horizontal line
@@ -413,7 +413,7 @@ def plot_rank_evolution(csv_path):
             linestyle="--",
             linewidth=1.5,
             label="(Mean)",
-            zorder=1,
+            zorder=11,
         )
 
     # Set log scale (limits auto-determined by data)
