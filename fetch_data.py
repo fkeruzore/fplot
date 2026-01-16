@@ -59,6 +59,7 @@ def history_to_csv_rows(history: dict) -> list[dict]:
         event_transfers -> TM
         event_transfers_cost -> TC
         value -> £ (divided by 10, API returns 0.1£ units)
+        Chip -> chip played (WC, BB, TC, FH) or empty
 
     Args:
         history: Response from get_team_history()
@@ -66,10 +67,25 @@ def history_to_csv_rows(history: dict) -> list[dict]:
     Returns:
         List of dicts ready for csv.DictWriter, sorted by gameweek descending
     """
+    # Build chip lookup: event (gameweek) -> abbreviation
+    chip_name_map = {
+        "wildcard": "WC",
+        "bboost": "BB",
+        "3xc": "TC",
+        "freehit": "FH",
+    }
+    chip_lookup = {}
+    for chip in history.get("chips", []):
+        name = chip.get("name", "")
+        event = chip.get("event")
+        if event is not None and name in chip_name_map:
+            chip_lookup[event] = chip_name_map[name]
+
     rows = []
     for gw_data in history.get("current", []):
+        event = gw_data["event"]
         row = {
-            "GW": f"GW{gw_data['event']}",
+            "GW": f"GW{event}",
             "OR": gw_data["overall_rank"],
             "#": "",  # Empty column maintained for format compatibility
             "OP": gw_data["total_points"],
@@ -79,6 +95,7 @@ def history_to_csv_rows(history: dict) -> list[dict]:
             "TM": gw_data["event_transfers"],
             "TC": gw_data["event_transfers_cost"],
             "£": gw_data["value"] / 10,  # Convert from 0.1£ to £
+            "Chip": chip_lookup.get(event, ""),
         }
         rows.append(row)
 
@@ -94,7 +111,19 @@ def write_season_csv(rows: list[dict], output_path: Path) -> None:
         rows: List of row dicts from history_to_csv_rows()
         output_path: Path to write the CSV file
     """
-    fieldnames = ["GW", "OR", "#", "OP", "GWR", "GWP", "PB", "TM", "TC", "£"]
+    fieldnames = [
+        "GW",
+        "OR",
+        "#",
+        "OP",
+        "GWR",
+        "GWP",
+        "PB",
+        "TM",
+        "TC",
+        "£",
+        "Chip",
+    ]
 
     with open(output_path, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)

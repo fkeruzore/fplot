@@ -7,6 +7,7 @@ from matplotlib.ticker import MultipleLocator, FuncFormatter
 import numpy as np
 
 plt.style.use(["petroff10", Path(__file__).parent / "fplplot.mplstyle"])
+save_dpi = 300
 
 
 def load_fpl_data(csv_path):
@@ -28,6 +29,7 @@ def load_fpl_data(csv_path):
         "tc": [],  # Transfer Cost
         "gwp": [],  # Gameweek Points
         "pb": [],  # Points on Bench
+        "chips": [],  # Chips played (WC, BB, TC, FH or empty string)
     }
 
     with open(csv_path, "r") as f:
@@ -85,12 +87,18 @@ def load_fpl_data(csv_path):
                 except (ValueError, TypeError):
                     pb_val = 0
 
+            # Extract Chip (backward compatible - handle missing column)
+            chip_val = ""
+            if "Chip" in row:
+                chip_val = row["Chip"].strip()
+
             data["gw"].append(gw)
             data["or_vals"].append(or_val)
             data["gwr"].append(gwr_val)
             data["tc"].append(tc_val)
             data["gwp"].append(gwp_val)
             data["pb"].append(pb_val)
+            data["chips"].append(chip_val)
 
     # Sort by gameweek (handles reversed order in 2526 format)
     sorted_indices = sorted(
@@ -146,6 +154,61 @@ def load_bootstrap_averages(json_path=None):
     return averages
 
 
+def plot_hits_and_chips(ax, data):
+    """Plot hits and chips as vertical bars on the given axis.
+
+    Chip labels are positioned at 95% of the y-axis span using axes transform,
+    so this function works regardless of y-axis limits or scale.
+
+    Args:
+        ax: Matplotlib axis to plot on
+        data: FPL data dict with 'gw', 'tc', and 'chips' keys
+    """
+    # Plot hits as vertical bars (TC > 0)
+    for i, (gw, tc) in enumerate(zip(data["gw"], data["tc"], strict=False)):
+        if tc > 0:
+            ax.axvspan(
+                gw - 0.1,
+                gw + 0.1,
+                color="C2",
+                alpha=0.3,
+                label="Hits" if i == 0 or data["tc"][i - 1] == 0 else "",
+                lw=0,
+                ec=None,
+                zorder=0,
+            )
+
+    # Plot chips as vertical bars with labels
+    chip_label_added = False
+    for gw, chip in zip(data["gw"], data["chips"], strict=False):
+        if chip:
+            ax.axvspan(
+                gw - 0.25,
+                gw + 0.25,
+                color="C4",
+                alpha=0.4,
+                label="Chips" if not chip_label_added else "",
+                lw=0,
+                ec=None,
+                zorder=0,
+            )
+            # Use blended transform: x in data coords, y in axes coords (0-1)
+            ax.text(
+                gw,
+                0.95,
+                chip,
+                transform=ax.get_xaxis_transform(),
+                ha="center",
+                va="top",
+                fontsize=6,
+                color="white",
+                rotation=90,
+                fontweight="bold",
+                zorder=10,
+            )
+            chip_label_added = True
+
+
 def plot_points_evolution(csv_path):
     """Generate FPL points per gameweek visualization.
 
@@ -169,19 +232,8 @@ def plot_points_evolution(csv_path):
     # Create figure
     fig, ax = plt.subplots(figsize=(10, 6))
 
-    # 1. Plot hits as vertical bars (TC > 0)
-    for i, (gw, tc) in enumerate(zip(data["gw"], data["tc"], strict=False)):
-        if tc > 0:
-            ax.axvspan(
-                gw - 0.25,
-                gw + 0.25,
-                color="C2",
-                alpha=0.3,
-                label="Hits" if i == 0 or data["tc"][i - 1] == 0 else "",
-                lw=0,
-                ec=None,
-                zorder=0,
-            )
+    # 1. Plot hits and chips
+    plot_hits_and_chips(ax, data)
 
     # 2. Plot Gameweek Points line
     ax.plot(
@@ -265,7 +317,7 @@ def plot_points_evolution(csv_path):
     output_path = script_dir / "imgs" / f"{csv_path_obj.stem}_points.png"
     output_path.parent.mkdir(exist_ok=True)
 
-    plt.savefig(output_path, dpi=150, bbox_inches="tight")
+    plt.savefig(output_path, dpi=save_dpi, bbox_inches="tight")
     print(f"Saved visualization to {output_path}")
 
     plt.close()
@@ -304,19 +356,8 @@ def plot_rank_evolution(csv_path):
     # Create figure
     fig, ax = plt.subplots(figsize=(10, 6))
 
-    # 1. Plot hits as vertical bars (TC > 0)
-    for i, (gw, tc) in enumerate(zip(data["gw"], data["tc"], strict=False)):
-        if tc > 0:
-            ax.axvspan(
-                gw - 0.25,
-                gw + 0.25,
-                color="C2",
-                alpha=0.3,
-                label="Hits" if i == 0 or data["tc"][i - 1] == 0 else "",
-                lw=0,
-                ec=None,
-                zorder=0,
-            )
+    # 1. Plot hits and chips
+    plot_hits_and_chips(ax, data)
 
     # 2. Plot Overall Rank line
     ax.plot(
@@ -375,9 +416,8 @@ def plot_rank_evolution(csv_path):
             zorder=1,
         )
 
-    # Set log scale and limits
+    # Set log scale (limits auto-determined by data)
     ax.set_yscale("log")
-    ax.set_ylim(1e4, 1e7)
     ax.invert_yaxis()  # Invert so better ranks (lower values) are at the top
 
     # Set x-axis limits and ticks
@@ -420,7 +460,7 @@ def plot_rank_evolution(csv_path):
     output_path = script_dir / "imgs" / f"{csv_path_obj.stem}_rank.png"
     output_path.parent.mkdir(exist_ok=True)
 
-    plt.savefig(output_path, dpi=150, bbox_inches="tight")
+    plt.savefig(output_path, dpi=save_dpi, bbox_inches="tight")
     print(f"Saved visualization to {output_path}")
 
     plt.close()
