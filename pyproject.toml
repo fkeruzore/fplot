@@ -1,5 +1,5 @@
 [project]
-name = "fplplot"
+name = "fplot"
 version = "0.1.0"
 description = "Fantasy Premier League rank visualization tool"
 readme = "README.md"
