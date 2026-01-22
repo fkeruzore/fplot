@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-`fplplot` is a Python tool for analyzing and visualizing Fantasy Premier League (FPL) data. The project is in early development stages.
+`fplot` is a Python tool for analyzing and visualizing Fantasy Premier League (FPL) data. The project is in early development stages.
 
 ## Development Setup
 
@@ -81,11 +81,11 @@ FPL data is stored as CSV files in the `data/` directory:
 ## Directory Structure
 
 ```
-fplplot/
+fplot/
 ├── main.py              # Entry point script
 ├── fetch_data.py        # FPL API data fetching module
 ├── visualize.py         # Visualization module
-├── fplplot.mplstyle     # Custom matplotlib style
+├── fplot.mplstyle     # Custom matplotlib style
 ├── pyproject.toml       # Project dependencies and metadata
 ├── .python-version      # Python version specification
 ├── data/                # FPL data files

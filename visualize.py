@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator, FuncFormatter
 import numpy as np
 
-plt.style.use(["petroff10", Path(__file__).parent / "fplplot.mplstyle"])
+plt.style.use(["petroff10", Path(__file__).parent / "fplot.mplstyle"])
 save_dpi = 300
 
 
@@ -455,7 +455,7 @@ def plot_rank_evolution(csv_path):
 
     # Save figure
     csv_path_obj = Path(csv_path)
-    # Save to imgs/ directory in fplplot
+    # Save to imgs/ directory in fplot
     script_dir = Path(__file__).parent
     output_path = script_dir / "imgs" / f"{csv_path_obj.stem}_rank.png"
     output_path.parent.mkdir(exist_ok=True)

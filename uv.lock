@@ -185,7 +185,7 @@ wheels = [
 ]
 
 [[package]]
-name = "fplplot"
+name = "fplot"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
