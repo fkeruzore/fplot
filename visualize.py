@@ -209,7 +209,7 @@ def plot_hits_and_chips(ax, data):
             chip_label_added = True
 
 
-def plot_points_evolution(csv_path):
+def plot_points_evolution(csv_path, ax=None):
     """Generate FPL points per gameweek visualization.
 
     Creates a plot showing Gameweek Points, Points on Bench, and
@@ -217,9 +217,10 @@ def plot_points_evolution(csv_path):
 
     Args:
         csv_path: Path to CSV file (e.g., "data/2526.csv")
+        ax: Optional matplotlib axis. If None, creates a new figure and saves PNG.
 
     Output:
-        Saves PNG to imgs/ directory with _points suffix
+        Saves PNG to imgs/ directory with _points suffix (only when ax is None)
     """
     # Load data
     data = load_fpl_data(csv_path)
@@ -229,8 +230,10 @@ def plot_points_evolution(csv_path):
         print(f"No valid data found in {csv_path}")
         return
 
-    # Create figure
-    fig, ax = plt.subplots(figsize=(10, 6))
+    # Create figure if no axis provided
+    standalone = ax is None
+    if standalone:
+        fig, ax = plt.subplots(figsize=(10, 6))
 
     # 1. Plot hits and chips
     plot_hits_and_chips(ax, data)
@@ -289,7 +292,8 @@ def plot_points_evolution(csv_path):
     ax.xaxis.set_minor_locator(MultipleLocator(1))
 
     # Labels
-    ax.set_xlabel("GW", fontsize=12)
+    if standalone:
+        ax.set_xlabel("GW", fontsize=12)
     ax.set_ylabel("Points", fontsize=12)
 
     # Grid
@@ -308,22 +312,18 @@ def plot_points_evolution(csv_path):
         frameon=True,
     )
 
-    # Tight layout
-    plt.tight_layout()
-
-    # Save figure
-    csv_path_obj = Path(csv_path)
-    script_dir = Path(__file__).parent
-    output_path = script_dir / "imgs" / f"{csv_path_obj.stem}_points.png"
-    output_path.parent.mkdir(exist_ok=True)
-
-    plt.savefig(output_path, dpi=save_dpi, bbox_inches="tight")
-    print(f"Saved visualization to {output_path}")
-
-    plt.close()
+    if standalone:
+        plt.tight_layout()
+        csv_path_obj = Path(csv_path)
+        script_dir = Path(__file__).parent
+        output_path = script_dir / "imgs" / f"{csv_path_obj.stem}_points.png"
+        output_path.parent.mkdir(exist_ok=True)
+        plt.savefig(output_path, dpi=save_dpi, bbox_inches="tight")
+        print(f"Saved visualization to {output_path}")
+        plt.close()
 
 
-def plot_rank_evolution(csv_path):
+def plot_rank_evolution(csv_path, ax=None):
     """Generate FPL rank evolution visualization.
 
     Creates a plot showing Overall Rank and Gameweek Rank evolution
@@ -331,9 +331,10 @@ def plot_rank_evolution(csv_path):
 
     Args:
         csv_path: Path to CSV file (e.g., "data/2425.csv")
+        ax: Optional matplotlib axis. If None, creates a new figure and saves PNG.
 
     Output:
-        Saves PNG to imgs/ directory with same base name as input CSV
+        Saves PNG to imgs/ directory with _rank suffix (only when ax is None)
     """
     # Load data
     data = load_fpl_data(csv_path)
@@ -353,8 +354,10 @@ def plot_rank_evolution(csv_path):
     valid_gwr = [g for g in data["gwr"] if g is not None]
     mean_gwr = np.mean(valid_gwr) if valid_gwr else None
 
-    # Create figure
-    fig, ax = plt.subplots(figsize=(10, 6))
+    # Create figure if no axis provided
+    standalone = ax is None
+    if standalone:
+        fig, ax = plt.subplots(figsize=(10, 6))
 
     # 1. Plot hits and chips
     plot_hits_and_chips(ax, data)
@@ -431,7 +434,8 @@ def plot_rank_evolution(csv_path):
     ax.yaxis.set_major_formatter(FuncFormatter(format_rank))
 
     # Labels
-    ax.set_xlabel("GW", fontsize=12)
+    if standalone:
+        ax.set_xlabel("GW", fontsize=12)
     ax.set_ylabel("Rank", fontsize=12)
 
     # Grid
@@ -450,17 +454,37 @@ def plot_rank_evolution(csv_path):
         frameon=True,
     )
 
-    # Tight layout
+    if standalone:
+        plt.tight_layout()
+        csv_path_obj = Path(csv_path)
+        script_dir = Path(__file__).parent
+        output_path = script_dir / "imgs" / f"{csv_path_obj.stem}_rank.png"
+        output_path.parent.mkdir(exist_ok=True)
+        plt.savefig(output_path, dpi=save_dpi, bbox_inches="tight")
+        print(f"Saved visualization to {output_path}")
+        plt.close()
+
+
+def plot_season(csv_path):
+    """Generate combined rank + points visualization for a season.
+
+    Creates a single figure with rank evolution on top and points per GW
+    on the bottom, sharing the x-axis.
+
+    Args:
+        csv_path: Path to CSV file (e.g., "data/2526.csv")
+
+    Output:
+        Saves PNG to imgs/ directory with the season stem as filename
+    """
+    fig, (ax_rank, ax_pts) = plt.subplots(2, 1, figsize=(10, 10), sharex=True)
+    plot_rank_evolution(csv_path, ax=ax_rank)
+    plot_points_evolution(csv_path, ax=ax_pts)
+    ax_pts.set_xlabel("GW", fontsize=12)
     plt.tight_layout()
-
-    # Save figure
-    csv_path_obj = Path(csv_path)
-    # Save to imgs/ directory in fplot
     script_dir = Path(__file__).parent
-    output_path = script_dir / "imgs" / f"{csv_path_obj.stem}_rank.png"
+    output_path = script_dir / "imgs" / f"{Path(csv_path).stem}.png"
     output_path.parent.mkdir(exist_ok=True)
-
     plt.savefig(output_path, dpi=save_dpi, bbox_inches="tight")
     print(f"Saved visualization to {output_path}")
-
     plt.close()
