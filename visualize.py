@@ -307,7 +307,9 @@ def plot_points_evolution(csv_path, ax=None):
     ax.legend(
         by_label.values(),
         by_label.keys(),
-        loc="upper right",
+        loc="upper left",
+        bbox_to_anchor=(1.01, 1),
+        borderaxespad=0,
         fontsize=11,
         frameon=True,
     )
@@ -449,7 +451,9 @@ def plot_rank_evolution(csv_path, ax=None):
     ax.legend(
         by_label.values(),
         by_label.keys(),
-        loc="upper right",
+        loc="upper left",
+        bbox_to_anchor=(1.01, 1),
+        borderaxespad=0,
         fontsize=11,
         frameon=True,
     )
