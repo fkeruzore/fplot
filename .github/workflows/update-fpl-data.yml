@@ -27,18 +27,17 @@ jobs:
       - name: Fetch FPL data
         run: uv run python fetch_data.py
 
-      - name: Check for changes
+      - name: Generate visualization
+        run: uv run python main.py
+
+      - name: Check for image changes
         id: check_changes
         run: |
-          if git diff --quiet data/; then
+          if git diff --quiet imgs/; then
             echo "changed=false" >> $GITHUB_OUTPUT
           else
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
-
-      - name: Generate visualization
-        if: steps.check_changes.outputs.changed == 'true'
-        run: uv run python main.py
 
       - name: Commit and push changes
         if: steps.check_changes.outputs.changed == 'true'
