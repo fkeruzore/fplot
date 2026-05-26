@@ -1,9 +1,9 @@
 name: Update FPL Data
 
 on:
-  schedule:
-    # Midnight London time (GMT). During BST this runs at 1am London time.
-    - cron: "0 0 * * *"
+  # uncomment the following to resume scheduler
+  # schedule:
+  #   - cron: "0 0 * * *"  # 00:00 GMT (Midnight/1AM London time).
   workflow_dispatch: # Allow manual trigger
 
 jobs:
@@ -14,13 +14,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-  
+
       - name: Install uv
         uses: astral-sh/setup-uv@v5
-  
+
       - name: Install Python
         run: uv python install 3.12
-      
+
       - name: Install the project
         run: uv sync --locked --dev
 
