@@ -3,7 +3,7 @@
 import csv
 from pathlib import Path
 import matplotlib.pyplot as plt
-from matplotlib.ticker import MultipleLocator, FuncFormatter
+from matplotlib.ticker import MultipleLocator, FuncFormatter, LogLocator
 import numpy as np
 
 plt.style.use(["petroff10", Path(__file__).parent / "fplot.mplstyle"])
@@ -108,6 +108,18 @@ def load_fpl_data(csv_path):
         data[key] = [data[key][i] for i in sorted_indices]
 
     return data
+
+
+def next_nice_rank_bound(value, cap=1e7):
+    """Round value up to the next 1/2/5 * 10^n tick, capped at `cap`."""
+    value = min(value, cap)
+    exponent = int(np.floor(np.log10(value))) - 1
+    while True:
+        for m in (1, 2, 5):
+            candidate = m * (10.0**exponent)
+            if candidate >= value:
+                return min(candidate, cap)
+        exponent += 1
 
 
 def format_rank(value, pos):
@@ -425,6 +437,12 @@ def plot_rank_evolution(csv_path, ax=None):
     ax.set_yscale("log")
     ax.invert_yaxis()  # Invert so better ranks (lower values) are at the top
 
+    # Cap the worst-rank end of the axis at the next nice tick, max 10M
+    worst_rank = max(data["or_vals"] + [g for g in data["gwr"] if g is not None])
+    bottom = next_nice_rank_bound(worst_rank, cap=1e7)
+    _, top = ax.get_ylim()
+    ax.set_ylim(bottom, top)
+
     # Set x-axis limits and ticks
     ax.set_xlim(0.5, 38.5)
 
@@ -432,7 +450,8 @@ def plot_rank_evolution(csv_path, ax=None):
     ax.xaxis.set_major_locator(MultipleLocator(2))
     ax.xaxis.set_minor_locator(MultipleLocator(1))
 
-    # Y-axis: custom formatter for human-readable ranks
+    # Y-axis: ticks at 1x/2x/5x per decade (e.g. 500k, 1M, 2M, 5M, 10M)
+    ax.yaxis.set_major_locator(LogLocator(base=10, subs=(1, 2, 5)))
     ax.yaxis.set_major_formatter(FuncFormatter(format_rank))
 
     # Labels
