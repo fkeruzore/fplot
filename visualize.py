@@ -3,7 +3,7 @@
 import csv
 from pathlib import Path
 import matplotlib.pyplot as plt
-from matplotlib.ticker import MultipleLocator, FuncFormatter
+from matplotlib.ticker import MultipleLocator, FuncFormatter, LogLocator
 import numpy as np
 
 plt.style.use(["petroff10", Path(__file__).parent / "fplot.mplstyle"])
@@ -425,6 +425,10 @@ def plot_rank_evolution(csv_path, ax=None):
     ax.set_yscale("log")
     ax.invert_yaxis()  # Invert so better ranks (lower values) are at the top
 
+    # Cap the worst-rank end of the axis at 10M, even if actual data is worse
+    bottom, top = ax.get_ylim()
+    ax.set_ylim(min(bottom, 1e7), top)
+
     # Set x-axis limits and ticks
     ax.set_xlim(0.5, 38.5)
 
@@ -432,7 +436,8 @@ def plot_rank_evolution(csv_path, ax=None):
     ax.xaxis.set_major_locator(MultipleLocator(2))
     ax.xaxis.set_minor_locator(MultipleLocator(1))
 
-    # Y-axis: custom formatter for human-readable ranks
+    # Y-axis: ticks at 1x/2x/5x per decade (e.g. 500k, 1M, 2M, 5M, 10M)
+    ax.yaxis.set_major_locator(LogLocator(base=10, subs=(1, 2, 5)))
     ax.yaxis.set_major_formatter(FuncFormatter(format_rank))
 
     # Labels
