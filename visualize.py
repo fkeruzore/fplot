@@ -110,6 +110,18 @@ def load_fpl_data(csv_path):
     return data
 
 
+def next_nice_rank_bound(value, cap=1e7):
+    """Round value up to the next 1/2/5 * 10^n tick, capped at `cap`."""
+    value = min(value, cap)
+    exponent = int(np.floor(np.log10(value))) - 1
+    while True:
+        for m in (1, 2, 5):
+            candidate = m * (10.0**exponent)
+            if candidate >= value:
+                return min(candidate, cap)
+        exponent += 1
+
+
 def format_rank(value, pos):
     """Format rank values as 10M, 1M, 100k, 10k."""
     if value >= 1e7:
@@ -425,9 +437,11 @@ def plot_rank_evolution(csv_path, ax=None):
     ax.set_yscale("log")
     ax.invert_yaxis()  # Invert so better ranks (lower values) are at the top
 
-    # Cap the worst-rank end of the axis at 10M, even if actual data is worse
-    bottom, top = ax.get_ylim()
-    ax.set_ylim(min(bottom, 1e7), top)
+    # Cap the worst-rank end of the axis at the next nice tick, max 10M
+    worst_rank = max(data["or_vals"] + [g for g in data["gwr"] if g is not None])
+    bottom = next_nice_rank_bound(worst_rank, cap=1e7)
+    _, top = ax.get_ylim()
+    ax.set_ylim(bottom, top)
 
     # Set x-axis limits and ticks
     ax.set_xlim(0.5, 38.5)
